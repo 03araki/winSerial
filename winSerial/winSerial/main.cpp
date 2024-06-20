@@ -1,5 +1,6 @@
 #include "WinSerial.h"
 #include <stdio.h>
+#include <string.h>
 
 BOOL g_bThreadFlag = TRUE;
 DWORD WINAPI ThreadFunc(LPVOID arg);
@@ -36,22 +37,21 @@ int main()
 		exit(1);
 	}
 	printf("Port Open Success.\n");
-	printf("Press [Enter] key to exit ... ");
+	printf("Press [Ctrl+D] to exit ... ");
 
 	serial.flush();
 
 	// Generate thread for serial data receive
 	DWORD dwThreadID;
 	HANDLE hThread = CreateThread(NULL, 0, ThreadFunc, LPVOID(&serial), 0, &dwThreadID);
+	int result;
 
-	while (true) {
-		// serial.writeBytes(TxBuf, 20); // write data
-		if (GetAsyncKeyState(VK_RETURN)) {
-			g_bThreadFlag = FALSE;
-			WaitForSingleObject(hThread, INFINITE);	// Waiting for thread to close
-			break;
-		}
+	while (gets_s(TxBuf, 20) != NULL) {
+		serial.writeBytes(TxBuf, 20); // write data
 	}
+
+	g_bThreadFlag = FALSE;
+	WaitForSingleObject(hThread, INFINITE);	// Waiting for thread to close
 
 	serial.close();
 
