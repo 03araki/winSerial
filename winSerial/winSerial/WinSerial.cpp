@@ -23,25 +23,28 @@ BOOL CWinSerial::setup(int comPort, int baudrate)
 	char cComPortStr[256];
 	sprintf_s(cComPortStr, 256, "\\\\.\\COM%d", comPort);
 
-	// COM ポートのオープン
+	// Com port open
 	m_hComPort = CreateFile(cComPortStr, GENERIC_READ | GENERIC_WRITE,
 		0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (m_hComPort == INVALID_HANDLE_VALUE) return FALSE;
 
-	// 送信設定
+	// Serial communication send/receive settings
 	DCB dcb;
-	ZeroMemory(&dcb, sizeof(DCB));
-	sprintf_s(cComPortStr, 256, "COM%d: baud=%d parity=N data=8 stop=1", comPort, baudrate);
-	if (!BuildCommDCB(cComPortStr, &dcb)) {
-		close();
-		return FALSE;
-	}
+	GetCommState(m_hComPort, &dcb);
+	dcb.BaudRate = baudrate;
+	dcb.ByteSize = 8;
+	dcb.Parity = NOPARITY;
+	dcb.StopBits = ONESTOPBIT;
+	dcb.fOutxCtsFlow = FALSE;
+	dcb.fRtsControl = RTS_CONTROL_ENABLE;
+	
+
 	if (!SetCommState(m_hComPort, &dcb)) {
 		close();
 		return FALSE;
 	}
 
-	// タイムアウト設定
+	// Timeout settings for Serial communication
 	COMMTIMEOUTS timeout;
 	timeout.ReadIntervalTimeout = 1;
 	timeout.ReadTotalTimeoutMultiplier = 0;
